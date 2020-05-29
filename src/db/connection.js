@@ -1,0 +1,12 @@
+const mongoose = require('mongoose');
+
+mongoose.Promise = global.Promise;
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/posthunt');
+
+
+mongoose.connection.on('close', () => {
+  console.log('MongoDB connection closed')
+  process.exit(0)
+});
+
+module.exports = mongoose;
