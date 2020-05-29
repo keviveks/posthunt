@@ -1,20 +1,46 @@
+const { createServer } = require('http');
 const express = require('express');
-const graphqlHTTP = require('express-graphql');
+const bodyParser = require('body-parser');
+const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
+const { SubscriptionServer } = require('subscriptions-transport-ws');
+const { subscribe, execute } = require('graphql');
 const schema = require('./schema');
+const db = require('./db');
 
-const server = express();
+const app = express();
+const server = createServer(app);
 
-const dev = process.env.NODE_ENV === 'production';
-const port = process.env.NODE_PORT || 5000;
+const dev = process.env.NODE_ENV !== 'production'
+const PORT = process.env.PORT || 5000
 
-server.use('graphql', graphqlHTTP((req, res, gql) => ({
-  schema,
-  graphiql: dev,
-  pretty: dev,
-})));
+app.use(bodyParser.json())
 
-server.listen((PORT, err) => {
-  if (err) throw err;
+app.use('/graphql', graphqlExpress({
+    context: {
+      db
+    },
+    schema,
+  })
+);
 
-  console.log(`Application started on port ${port}`)
+app.use('/graphiql', graphiqlExpress({
+    endpointURL: '/graphql',
+    subscriptionsEndpoint: `ws://localhost:${PORT}/subscriptions`
+  })
+);
+
+server.listen(PORT, err => {
+  if (err) throw err
+
+  new SubscriptionServer({
+    schema,
+    execute,
+    subscribe,
+    onConnect: () => console.log('Client connected')
+  }, {
+    server,
+    path: '/subscriptions'
+  });
+
+  console.log(`> Ready on PORT ${PORT}`);
 });
