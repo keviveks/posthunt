@@ -1,7 +1,7 @@
 const { createServer } = require('http');
 const express = require('express');
 const bodyParser = require('body-parser');
-const { graphqlExpress, graphiqlExpress } = require('apollo-server-express');
+const { graphqlExpress, graphiqlExpress } = require('graphql-server-express');
 const { SubscriptionServer } = require('subscriptions-transport-ws');
 const { subscribe, execute } = require('graphql');
 const schema = require('./schema');
@@ -13,7 +13,7 @@ const server = createServer(app);
 const dev = process.env.NODE_ENV !== 'production'
 const PORT = process.env.PORT || 5000
 
-app.use(bodyParser.json())
+app.use(bodyParser.json());
 
 app.use('/graphql', graphqlExpress({
     context: {
